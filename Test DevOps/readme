@@ -1,0 +1,62 @@
+# Étape 1 : base PHP avec extensions
+FROM php:8.1-fpm
+
+# Étape 2 : installation des dépendances système
+RUN apt-get update && apt-get install -y \
+    git curl zip unzip libpng-dev libonig-dev libxml2-dev \
+    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Étape 3 : installation de Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Étape 4 : copie du projet
+WORKDIR /var/www
+COPY . .
+
+# Étape 5 : permissions et cache
+RUN composer install --optimize-autoloader --no-dev \
+    && chown -R www-data:www-data /var/www \
+    && chmod -R 775 storage bootstrap/cache
+
+# Étape 6 : exposer le port
+EXPOSE 9000
+CMD ["php-fpm"]
+
+
+
+
+
+
+##Déploiement manuel sur serveur de test##
+Je clone le repo via SSH (git clone)
+
+Je configure .env avec les variables du serveur
+
+J’installe les dépendances (composer install)
+
+Je lance les migrations (php artisan migrate)
+
+Je configure Nginx pour pointer vers /public
+
+Je teste l’API avec Postman ou curl
+
+
+#Stratégie CI/CD automatisée#
+En production, je préfère une stratégie CI/CD avec GitHub Actions ou GitLab CI :
+
+Push sur la branche main déclenche le pipeline
+
+Étapes du pipeline :
+
+Lint + tests unitaires
+
+Build du container Docker
+
+Push vers un registre (DockerHub ou GitLab Registry)
+
+Déploiement sur le serveur via SSH ou Kubernetes
+
+Les secrets (API keys, DB credentials) sont injectés via des variables d’environnement sécurisées
+
+Cette approche garantit des livraisons rapides, fiables et traçables, tout en respectant les bonnes pratiques DevOps
+
